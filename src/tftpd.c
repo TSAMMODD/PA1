@@ -16,6 +16,9 @@
 #include <stdio.h>
 
 int main(int argc, char **argv) {
+    fprintf(stdout, "test: %d \n", argc);
+    fprintf(stdout, "test: %c \n", *(*(argv)));
+
     int sockfd;
     struct sockaddr_in server, client;
     //struct sockaddr_storage their_addr;
@@ -28,6 +31,7 @@ int main(int argc, char **argv) {
     /* Network functions need arguments in network byte order instead of
        host byte order. The macros htonl, htons convert the values, */
     server.sin_addr.s_addr = htonl(INADDR_ANY);
+
     server.sin_port = htons(argc);
     bind(sockfd, (struct sockaddr *) &server, (socklen_t) sizeof(server));
 
