@@ -44,10 +44,13 @@ int main(int argc, char **argv) {
         tv.tv_sec = 5;
         tv.tv_usec = 0;
         retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
+        fprintf(stdout, "retval: %d. \n", retval);
 
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
+            fprintf(stdout, "inside retval > 0. \n");
+            fflush(stdout);
             /* Data is available, receive it. */
             assert(FD_ISSET(sockfd, &rfds));
 
