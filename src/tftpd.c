@@ -15,8 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
     char message[512];
