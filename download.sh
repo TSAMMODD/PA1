@@ -1,2 +1,2 @@
 #1/bin/bash
-tftp 127.0.0.1 32000 -c get example_data1
+tftp 127.0.0.1 7310 -c get example_data1
