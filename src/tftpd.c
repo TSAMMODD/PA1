@@ -18,6 +18,7 @@
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
+    //struct sockaddr_storage their_addr;
     char message[512];
 
     /* Create and bind a UDP socket */
