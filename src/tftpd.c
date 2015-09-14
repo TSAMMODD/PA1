@@ -24,6 +24,14 @@ void parseFileName(char* message, char* fileName) {
     strcpy(fileName, message + 2);
 }
 
+void parseFileMode(char* message, char* fileMode, int fileNameSize) {
+    strcpy(fileMode, message + 2 + fileNameSize + 1);
+}
+
+void getFileContent() {
+    
+}
+
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
@@ -69,12 +77,19 @@ int main(int argc, char **argv) {
                     (struct sockaddr *) &client,
                     &len);
 
-            int opCode = parseOpCode(message);
+            int opCode;
             char fileName[512];
+            char fileMode[512];
+
+            opCode = parseOpCode(message);
             parseFileName(message, fileName);
+            parseFileMode(message, fileMode, strlen(fileName));
+
             fprintf(stdout, "opCode: %d\n", opCode);
             fflush(stdout);
             fprintf(stdout, "fileName: %s\n", fileName);
+            fflush(stdout);
+            fprintf(stdout, "fileMode: %s\n", fileMode);
             fflush(stdout);
 
             /* Send the message back. */
