@@ -16,8 +16,9 @@
 #include <stdio.h>
 
 int main(int argc, char **argv) {
+    int result = argc;
     fprintf(stdout, "test: %d \n", argc);
-    fprintf(stdout, "test: %c \n", *(*(argv)));
+    fprintf(stdout, "test: %d \n", result);
 
     int sockfd;
     struct sockaddr_in server, client;
