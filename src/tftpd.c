@@ -16,6 +16,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int parseOpCode(char* message) {
+    return message[1];
+}
+
+void parseFileName(char* message, char* fileName) {
+    strcpy(fileName, message + 2);
+}
+
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
@@ -28,7 +36,6 @@ int main(int argc, char **argv) {
     /* Network functions need arguments in network byte order instead of
        host byte order. The macros htonl, htons convert the values, */
     server.sin_addr.s_addr = htonl(INADDR_ANY);
-
     server.sin_port = htons(atoi(argv[1]));
     bind(sockfd, (struct sockaddr *) &server, (socklen_t) sizeof(server));
 
@@ -45,13 +52,10 @@ int main(int argc, char **argv) {
         tv.tv_sec = 5;
         tv.tv_usec = 0;
         retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
-        fprintf(stdout, "retval: %d. \n", retval);
 
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-            fprintf(stdout, "inside retval > 0. \n");
-            fflush(stdout);
             /* Data is available, receive it. */
             assert(FD_ISSET(sockfd, &rfds));
 
@@ -64,6 +68,15 @@ int main(int argc, char **argv) {
                     sizeof(message) - 1, 0,
                     (struct sockaddr *) &client,
                     &len);
+
+            int opCode = parseOpCode(message);
+            char fileName[512];
+            parseFileName(message, fileName);
+            fprintf(stdout, "opCode: %d\n", opCode);
+            fflush(stdout);
+            fprintf(stdout, "fileName: %s\n", fileName);
+            fflush(stdout);
+
             /* Send the message back. */
             sendto(sockfd, message, (size_t) n, 0,
                     (struct sockaddr *) &client,
