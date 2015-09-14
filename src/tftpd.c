@@ -14,15 +14,11 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv) {
-    int result = argc;
-    fprintf(stdout, "test: %d \n", argc);
-    fprintf(stdout, "test: %d \n", result);
-
     int sockfd;
     struct sockaddr_in server, client;
-    //struct sockaddr_storage their_addr;
     char message[512];
 
     /* Create and bind a UDP socket */
@@ -33,7 +29,7 @@ int main(int argc, char **argv) {
        host byte order. The macros htonl, htons convert the values, */
     server.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    server.sin_port = htons(argc);
+    server.sin_port = htons(atoi(argv[1]));
     bind(sockfd, (struct sockaddr *) &server, (socklen_t) sizeof(server));
 
     for (;;) {
