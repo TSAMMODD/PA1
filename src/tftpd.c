@@ -16,6 +16,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define PACKAGE_LENGTH 516
+#define DATA_LENGTH 512
+
 int parseOpCode(char* message) {
     return message[1];
 }
@@ -28,11 +31,13 @@ void parseFileMode(char* message, char* fileMode, int fileNameSize) {
     strcpy(fileMode, message + 2 + fileNameSize + 1);
 }
 
-void parseFileContent(char* directory, char* fileName, char* message) {
+void parseFileContent(char* directory, char* fileName, int sockfd, struct sockaddr_in client) {
     FILE *fp;
-    char path[512];
-    char ch;
-    int counter = 0;
+    char message[PACKAGE_LENGTH];
+    char path[DATA_LENGTH];
+    size_t readSize = 0;
+    int blockNumber = 1;
+    int opCode = 3;
 
     strcpy(path, directory);
     strcat(path, "/");
@@ -43,30 +48,25 @@ void parseFileContent(char* directory, char* fileName, char* message) {
         perror("Error while opening the file.\n");
         exit(EXIT_FAILURE);
     }
-/*
-    while((ch = fgetc(fp)) != EOF ) {
-       	printf("%c",ch);
+
+    memset(message, 0, PACKAGE_LENGTH);
+    message[1] = opCode;
+
+    while(!feof(fp)) {
+        readSize = fread(&(message[4]), 1, 512, fp);
+        //fprintf(stdout, "READSIZE: %zu", readSize);
+        //fprintf(stdout, "TEST: %s", &(message[4]));
+        fflush(stdout);
+
+        message[3] = blockNumber & 0xff;
+        message[2] = (blockNumber >> 8) & 0xff;
+        sendto(sockfd, message, (size_t) readSize, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
+        memset(message, 0, PACKAGE_LENGTH);
+        blockNumber++;
     }
-*/
-    size_t bla = fread(message, 1, 512, fp);
-
-    fprintf(stdout, "%zu \n", bla);
-
-    
-    
-
 
     fclose(fp);
 }
-
-/*
-   sendto(sockfd, message, (size_t) n, 0,
-                (struct sockaddr *) &client,
-                (socklen_t) sizeof(client));
-   message[n] = '\0';
-   fprintf(stdout, "Received:\n%s\n", message);
-   fflush(stdout);
-*/
 
 int main(int argc, char **argv) {
     int sockfd;
@@ -108,22 +108,22 @@ int main(int argc, char **argv) {
             /* Receive one byte less than declared,
                because it will be zero-termianted
                below. */
-            ssize_t n = recvfrom(sockfd, message,
-                    sizeof(message) - 1, 0,
-                    (struct sockaddr *) &client,
-                    &len);
+            ssize_t n = recvfrom(sockfd, message, sizeof(message) - 1, 0, (struct sockaddr *) &client, &len);
+
             //
             int opCode;
             char* directory = NULL;
             char fileName[512];
             char fileMode[512];
+            
 
             directory = argv[2];
             opCode = parseOpCode(message);
             parseFileName(message, fileName);
             parseFileMode(message, fileMode, strlen(fileName));
-            parseFileContent(directory, fileName, message);
+            parseFileContent(directory, fileName, sockfd, client);
 
+            /*
             fprintf(stdout, "directory: %s\n", directory);
             fflush(stdout);
             fprintf(stdout, "opCode: %d\n", opCode);
@@ -132,19 +132,20 @@ int main(int argc, char **argv) {
             fflush(stdout);
             fprintf(stdout, "fileMode: %s\n", fileMode);
             fflush(stdout);
+            fprintf(stdout, "n: %zu\n", n);
+            fflush(stdout);
+            */
             //
 
             /* Send the message back. */
-            sendto(sockfd, message, (size_t) n, 0,
-                    (struct sockaddr *) &client,
-                    (socklen_t) sizeof(client));
+            //sendto(sockfd, message, (size_t) n, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             /* Zero terminate the message, otherwise
                printf may access memory outside of the
                string. */
-            message[n] = '\0';
+            //message[n] = '\0';
             /* Print the message to stdout and flush. */
-            fprintf(stdout, "Received:\n%s\n", message);
-            fflush(stdout);
+            //fprintf(stdout, "Received:\n%s\n", message);
+            //fflush(stdout);
         } else {
             fprintf(stdout, "No message in five seconds.\n");
             fflush(stdout);
