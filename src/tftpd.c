@@ -45,11 +45,8 @@ int parseOpCode(unsigned char* message) {
 }
 
 /* A method that returns the block number associated
- * with a packet. Block numbers are found in the 
+ * with a DATA/ACK packet. Block numbers are found in the 
  * third and fourth byte of a packet.
- * The block numbers on data packets 
- * begin with one and increase by one for each 
- * new block of data. 
  */
 unsigned short parseBlockNumber(unsigned char* message) {
     unsigned short block = message[2] << 8;
@@ -57,12 +54,21 @@ unsigned short parseBlockNumber(unsigned char* message) {
     return block;
 }
 
-/* */
+/* A method that accepts as input two strings (char arrays)
+ * that represent a RRQ/WRQ packet and the file name 
+ * respectively. It copies the filename from the packet
+ * which starts at byte three and ends at the next nullbyte. 
+ */
 void parseFileName(unsigned char* message, unsigned char* fileName) {
     strcpy(fileName, message + 2);
 }
 
-/* */
+/* A method that accepts as input three strings (char arrays)
+ * that represent a RRQ/WRQ packet, the file mode and the size of
+ * the file name respectively. It copies the mode field from the
+ * packet which starts at the byte that comes after the opcode, filename
+ * and the nullbyte after the filename.
+ */
 void parseFileMode(unsigned char* message, unsigned char* fileMode, int fileNameSize) {
     strcpy(fileMode, message + 2 + fileNameSize + 1);
 }
