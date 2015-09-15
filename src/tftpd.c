@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
             opCode = parseOpCode(message);
             parseFileName(message, fileName);
             parseFileMode(message, fileMode, strlen(fileName));
-            parseFileContent(directory, fileName, fileContent);
+            parseFileContent(directory, fileName);
 
             fprintf(stdout, "directory: %s\n", directory);
             fflush(stdout);
