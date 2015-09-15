@@ -99,6 +99,7 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
         memset(sendPackage, 0, PACKAGE_LENGTH);
         recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
         
+        // CHECK USER!! => TID of user => port number for example => check better
         if(parseOpCode(recievePackage) != OPC_ACK || parseBlockNumber(recievePackage) != blockNumber) {
             exit(0);
         }
@@ -113,7 +114,7 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
-    char message[512];
+    char message[DATA_LENGTH];
 
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -158,6 +159,8 @@ int main(int argc, char **argv) {
                 parseFileName(message, fileName);
                 parseFileMode(message, fileMode, strlen(fileName));
                 parseFileContent(directory, fileName, sockfd, client, len);
+            } else {
+                // error!
             }
         } else {
             fprintf(stdout, "No message in five seconds.\n");
