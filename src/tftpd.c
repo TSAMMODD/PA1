@@ -45,18 +45,19 @@ int parseOpCode(char* message) {
 }
 
 /* A method that returns the block number associated
- * with a packet. Block numbers are found in the 
+ * with a DATA/ACK packet. Block numbers are found in the 
  * third and fourth byte of a packet.
- * The block numbers on data packets 
- * begin with one and increase by one for each 
- * new block of data. 
  */
 int parseBlockNumber(char* message) {
     char* tmp = message;
     return (tmp[2] << 8) + tmp[3];
 }
 
-/* */
+/* A method that accepts as input two strings (char arrays)
+ * that represent a RRQ/WRQ packet and the file name 
+ * respectively. It copies the filename from the packet
+ * which starts at byte three and ends at the next nullbyte. 
+ */
 void parseFileName(char* message, char* fileName) {
     strcpy(fileName, message + 2);
 }
