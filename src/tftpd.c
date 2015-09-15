@@ -49,7 +49,7 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
     char recievePackage[PACKAGE_LENGTH];
     char path[DATA_LENGTH];
     size_t readSize = 0;
-    int blockNumber = 1;
+    short blockNumber = 1;
     int opCode = 3;
 
     strcpy(path, directory);
@@ -65,7 +65,7 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
     memset(sendPackage, 0, PACKAGE_LENGTH);
 
     while(!feof(fp)) {
-        readSize = fread(&(sendPackage[4]), 1, 512, fp);
+        readSize = fread(&(sendPackage[4]), 1, DATA_LENGTH, fp);
         fprintf(stdout, "READSIZE: %zu \n", readSize);
 
         sendPackage[1] = opCode;
