@@ -112,7 +112,7 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
-    char message[512];
+    char message[DATA_LENGTH];
 
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
