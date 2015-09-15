@@ -27,6 +27,11 @@
 #define OPC_ACK 4
 #define OPC_ERROR 5
 /* */
+#define ERROR_MSG_NOT_ACK "ERROR! DID NOT RECIEVE ACK RESPONSE."
+#define ERROR_MSG_WRONG_BLOCKNUMBER "ERROR! RECIEVED RESPONSE WITH WRONG BLOCKNUMBER."
+#define ERROR_MSG_UNKNOWN_USER "ERROR! RECIEVED RESPONSE FROM UNKNOWN USER."
+#define ERROR_MSG_FILE_NOT_FOUND "ERROR! FILE NOT FOUND."
+#define ERROR_MSG_ILLEGAL_TFTP_OPERATION "ERROR! ILLEGAL TFTP OPERTION."
 
 /* A method that returns the opcode associated
  * with a packet.
@@ -40,7 +45,7 @@
  *    4     Acknowledgment (ACK)
  *    5     Error (ERROR)
  */
-int parseOpCode(unsigned char* message) {
+unsigned short parseOpCode(unsigned char* message) {
     return message[1];
 }
 
@@ -76,11 +81,15 @@ void parseFileMode(unsigned char* message, unsigned char* fileMode, int fileName
 /* */
 void parseFileContent(unsigned char* directory, unsigned char* fileName, int sockfd, struct sockaddr_in client, socklen_t len) {
     FILE *fp;
+    char path[DATA_LENGTH];
     unsigned char sendPackage[PACKAGE_LENGTH];
     unsigned char recievePackage[PACKAGE_LENGTH];
-    char path[DATA_LENGTH];
-    size_t readSize = 0;
+    unsigned char errorPackage[PACKAGE_LENGTH];
     unsigned short blockNumber = 1;
+    unsigned short port = client.sin_port;
+    size_t readSize = 0;
+    unsigned short recievedOpCode = 0;
+    unsigned short recievedBlockNumber = 0;
 
     strcpy(path, (char*)directory);
     strcat(path, "/");
@@ -88,36 +97,51 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
     fp = fopen(path, "r");
 
     if(fp == NULL) {
-        perror("Error while opening the file.\n");
-        exit(EXIT_FAILURE);
-    }
+        memset(errorPackage, 0, PACKAGE_LENGTH);
+        errorPackage[1] = OPC_ERROR;
+        errorPackage[3] = 1;
+        strcpy((char*)&(errorPackage[4]), ERROR_MSG_FILE_NOT_FOUND);
+        errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
+        sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
+    } else {
+        while(!feof(fp)) {
+            memset(sendPackage, 0, PACKAGE_LENGTH);
+            memset(recievePackage, 0, PACKAGE_LENGTH);
+            readSize = fread(&(sendPackage[4]), 1, DATA_LENGTH, fp);
 
-    memset(sendPackage, 0, PACKAGE_LENGTH);
-    
-    while(!feof(fp)) {
-        readSize = fread(&(sendPackage[4]), 1, DATA_LENGTH, fp);
-        //fprintf(stdout, "READSIZE: %zu \n", readSize);
-        //fflush(stdout);
+            sendPackage[1] = OPC_DATA;
+            sendPackage[3] = blockNumber & 0xff;
+            sendPackage[2] = (blockNumber >> 8) & 0xff;
+            sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
+            memset(sendPackage, 0, PACKAGE_LENGTH);
+            recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
 
-        sendPackage[1] = OPC_DATA;
-        sendPackage[3] = blockNumber & 0xff;
-        sendPackage[2] = (blockNumber >> 8) & 0xff;
-        sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
-        memset(sendPackage, 0, PACKAGE_LENGTH);
-        recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
-        
-        // CHECK USER!! => TID of user => port number for example => check better
-        if(parseOpCode(recievePackage) != OPC_ACK || parseBlockNumber(recievePackage) != blockNumber) {
-            fprintf(stdout, "ERROR! OpCode!! \n");
-            fflush(stdout);
-            //exit(0);
+            recievedOpCode = parseOpCode(recievePackage); 
+            recievedBlockNumber = parseBlockNumber(recievePackage); 
+
+            if(recievedOpCode != OPC_ACK || recievedBlockNumber != blockNumber || port != client.sin_port) {
+                memset(errorPackage, 0, PACKAGE_LENGTH);
+                errorPackage[1] = OPC_ERROR;
+                errorPackage[3] = 0;
+
+                if(recievedOpCode != OPC_ACK) {
+                    strcpy((char*)&(errorPackage[4]), ERROR_MSG_NOT_ACK);
+                } else if(recievedBlockNumber != blockNumber) {
+                    strcpy((char*)&(errorPackage[4]), ERROR_MSG_WRONG_BLOCKNUMBER);
+                } else if(port != client.sin_port) {
+                    errorPackage[3] = 5;
+                    strcpy((char*)&(errorPackage[4]), ERROR_MSG_UNKNOWN_USER);
+                }
+
+                errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
+                sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
+            }
+
+            blockNumber++;
         }
 
-        memset(recievePackage, 0, PACKAGE_LENGTH);
-        blockNumber++;
+        fclose(fp);
     }
-
-    fclose(fp);
 }
 
 int main(int argc, char **argv) {
@@ -163,13 +187,21 @@ int main(int argc, char **argv) {
             unsigned char fileName[DATA_LENGTH];
             unsigned char fileMode[DATA_LENGTH];
             unsigned char* directory = (unsigned char*) argv[2];
+            unsigned char errorPackage[PACKAGE_LENGTH];
             
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
                 parseFileMode(message, fileMode, strlen((char*)fileName));
                 parseFileContent(directory, fileName, sockfd, client, len);
             } else {
-                // error!
+                fprintf(stdout, "opcode: %d \n", parseOpCode(message));
+                fflush(stdout);
+                memset(errorPackage, 0, PACKAGE_LENGTH);
+                errorPackage[1] = OPC_ERROR;
+                errorPackage[3] = 4;
+                strcpy((char*)&(errorPackage[4]), ERROR_MSG_ILLEGAL_TFTP_OPERATION);
+                errorPackage[sizeof(ERROR_MSG_ILLEGAL_TFTP_OPERATION) + 4] = '\0';
+                sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             }
         } else {
             fprintf(stdout, "No message in five seconds.\n");
