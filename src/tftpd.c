@@ -32,6 +32,7 @@ void parseFileContent(char* directory, char* fileName) {
     FILE *fp;
     char path[512];
     char ch;
+    int counter = 0;
 
     strcpy(path, directory);
     strcat(path, "/");
@@ -44,11 +45,27 @@ void parseFileContent(char* directory, char* fileName) {
     }
 
     while((ch = fgetc(fp)) != EOF ) {
+        /*
+        while(i <= 512) {
+            printf("%c",ch);
+            i++;
+        }
+        i = 0;
+        */
         printf("%c",ch);
     }
 
     fclose(fp);
 }
+
+/*
+   sendto(sockfd, message, (size_t) n, 0,
+                (struct sockaddr *) &client,
+                (socklen_t) sizeof(client));
+   message[n] = '\0';
+   fprintf(stdout, "Received:\n%s\n", message);
+   fflush(stdout);
+*/
 
 int main(int argc, char **argv) {
     int sockfd;
