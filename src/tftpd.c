@@ -69,9 +69,9 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
         sendPackage[1] = opCode;
         sendPackage[3] = blockNumber & 0xff;
         sendPackage[2] = (blockNumber >> 8) & 0xff;
-        sendto(sockfd, sendPackage, PACKAGE_LENGTH, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
+        sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
         memset(sendPackage, 0, PACKAGE_LENGTH);
-        recvfrom(sockfd, recievePackage, PACKAGE_LENGTH, 0, (struct sockaddr *) &client, &len);
+        recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
         
         if(parseOpCode(recievePackage) == ACK && parseBlockNumber(recievePackage) == blockNumber) {
             //continue;
