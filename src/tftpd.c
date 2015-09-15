@@ -28,7 +28,7 @@ void parseFileMode(char* message, char* fileMode, int fileNameSize) {
     strcpy(fileMode, message + 2 + fileNameSize + 1);
 }
 
-void parseFileContent(char* directory, char* fileName) {
+void parseFileContent(char* directory, char* fileName, char* message) {
     FILE *fp;
     char path[512];
     char ch;
@@ -43,17 +43,18 @@ void parseFileContent(char* directory, char* fileName) {
         perror("Error while opening the file.\n");
         exit(EXIT_FAILURE);
     }
-
+/*
     while((ch = fgetc(fp)) != EOF ) {
-        /*
-        while(i <= 512) {
-            printf("%c",ch);
-            i++;
-        }
-        i = 0;
-        */
-        printf("%c",ch);
+       	printf("%c",ch);
     }
+*/
+    size_t bla = fread(message, 1, 512, fp);
+
+    fprintf(stdout, "%zu \n", bla);
+
+    
+    
+
 
     fclose(fp);
 }
@@ -121,7 +122,7 @@ int main(int argc, char **argv) {
             opCode = parseOpCode(message);
             parseFileName(message, fileName);
             parseFileMode(message, fileMode, strlen(fileName));
-            parseFileContent(directory, fileName);
+            parseFileContent(directory, fileName, message);
 
             fprintf(stdout, "directory: %s\n", directory);
             fflush(stdout);
