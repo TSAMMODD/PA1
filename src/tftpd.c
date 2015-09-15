@@ -28,8 +28,26 @@ void parseFileMode(char* message, char* fileMode, int fileNameSize) {
     strcpy(fileMode, message + 2 + fileNameSize + 1);
 }
 
-void getFileContent() {
-    
+void parseFileContent(char* directory, char* fileName) {
+    FILE *fp;
+    char path[512];
+    char ch;
+
+    strcpy(path, directory);
+    strcat(path, "/");
+    strcat(path, fileName);    
+    fp = fopen(path, "r");
+
+    if(fp == NULL) {
+        perror("Error while opening the file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while((ch = fgetc(fp)) != EOF ) {
+        printf("%c",ch);
+    }
+
+    fclose(fp);
 }
 
 int main(int argc, char **argv) {
@@ -76,21 +94,27 @@ int main(int argc, char **argv) {
                     sizeof(message) - 1, 0,
                     (struct sockaddr *) &client,
                     &len);
-
+            //
             int opCode;
+            char* directory = NULL;
             char fileName[512];
             char fileMode[512];
 
+            directory = argv[2];
             opCode = parseOpCode(message);
             parseFileName(message, fileName);
             parseFileMode(message, fileMode, strlen(fileName));
+            parseFileContent(directory, fileName, fileContent);
 
+            fprintf(stdout, "directory: %s\n", directory);
+            fflush(stdout);
             fprintf(stdout, "opCode: %d\n", opCode);
             fflush(stdout);
             fprintf(stdout, "fileName: %s\n", fileName);
             fflush(stdout);
             fprintf(stdout, "fileMode: %s\n", fileMode);
             fflush(stdout);
+            //
 
             /* Send the message back. */
             sendto(sockfd, message, (size_t) n, 0,
