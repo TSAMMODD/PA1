@@ -1,2 +1,2 @@
 #1/bin/bash
-./src/tftpd 7310 data
+./src/tftpd $(/labs/tsam15/my_port) data

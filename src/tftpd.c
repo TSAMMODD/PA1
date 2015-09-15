@@ -112,14 +112,6 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
             fflush(stdout);
             //exit(0);
         }
-        /*
-        if(parseBlockNumber(recievePackage) != blockNumber) {
-            //fprintf(stdout, "TEST: %hhx-%hhx \n", recievePackage[2], recievePackage[3]);
-            //fprintf(stdout, "ERROR! Blocknumber!! %d \n", parseBlockNumber(recievePackage));
-            fprintf(stdout, "ERROR! blockNumber: %d \n", blockNumber);
-            fflush(stdout);
-        }
-        */
 
         memset(recievePackage, 0, PACKAGE_LENGTH);
         blockNumber++;
