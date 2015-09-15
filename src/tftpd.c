@@ -40,7 +40,7 @@
  *    4     Acknowledgment (ACK)
  *    5     Error (ERROR)
  */
-int parseOpCode(char* message) {
+int parseOpCode(unsigned char* message) {
     return message[1];
 }
 
@@ -51,29 +51,30 @@ int parseOpCode(char* message) {
  * begin with one and increase by one for each 
  * new block of data. 
  */
-int parseBlockNumber(char* message) {
-    char* tmp = message;
-    return (tmp[2] << 8) + tmp[3];
+unsigned short parseBlockNumber(unsigned char* message) {
+    unsigned short block = message[2] << 8;
+    block |= message[3];
+    return block;
 }
 
 /* */
-void parseFileName(char* message, char* fileName) {
+void parseFileName(unsigned char* message, unsigned char* fileName) {
     strcpy(fileName, message + 2);
 }
 
 /* */
-void parseFileMode(char* message, char* fileMode, int fileNameSize) {
+void parseFileMode(unsigned char* message, unsigned char* fileMode, int fileNameSize) {
     strcpy(fileMode, message + 2 + fileNameSize + 1);
 }
 
 /* */
-void parseFileContent(char* directory, char* fileName, int sockfd, struct sockaddr_in client, socklen_t len) {
+void parseFileContent(unsigned char* directory, unsigned char* fileName, int sockfd, struct sockaddr_in client, socklen_t len) {
     FILE *fp;
-    char sendPackage[PACKAGE_LENGTH];
-    char recievePackage[PACKAGE_LENGTH];
+    unsigned char sendPackage[PACKAGE_LENGTH];
+    unsigned char recievePackage[PACKAGE_LENGTH];
     char path[DATA_LENGTH];
     size_t readSize = 0;
-    short blockNumber = 1;
+    unsigned short blockNumber = 1;
 
     strcpy(path, directory);
     strcat(path, "/");
@@ -86,10 +87,11 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
     }
 
     memset(sendPackage, 0, PACKAGE_LENGTH);
-
+    
     while(!feof(fp)) {
         readSize = fread(&(sendPackage[4]), 1, DATA_LENGTH, fp);
-        fprintf(stdout, "READSIZE: %zu \n", readSize);
+        //fprintf(stdout, "READSIZE: %zu \n", readSize);
+        //fflush(stdout);
 
         sendPackage[1] = OPC_DATA;
         sendPackage[3] = blockNumber & 0xff;
@@ -100,8 +102,18 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
         
         // CHECK USER!! => TID of user => port number for example => check better
         if(parseOpCode(recievePackage) != OPC_ACK || parseBlockNumber(recievePackage) != blockNumber) {
-            exit(0);
+            fprintf(stdout, "ERROR! OpCode!! \n");
+            fflush(stdout);
+            //exit(0);
         }
+        /*
+        if(parseBlockNumber(recievePackage) != blockNumber) {
+            //fprintf(stdout, "TEST: %hhx-%hhx \n", recievePackage[2], recievePackage[3]);
+            //fprintf(stdout, "ERROR! Blocknumber!! %d \n", parseBlockNumber(recievePackage));
+            fprintf(stdout, "ERROR! blockNumber: %d \n", blockNumber);
+            fflush(stdout);
+        }
+        */
 
         memset(recievePackage, 0, PACKAGE_LENGTH);
         blockNumber++;
@@ -113,7 +125,7 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
-    char message[DATA_LENGTH];
+    unsigned char message[DATA_LENGTH];
 
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -150,9 +162,9 @@ int main(int argc, char **argv) {
             /* */
             recvfrom(sockfd, message, sizeof(message), 0, (struct sockaddr *) &client, &len);
 
-            char fileName[DATA_LENGTH];
-            char fileMode[DATA_LENGTH];
-            char* directory = argv[2];
+            unsigned char fileName[DATA_LENGTH];
+            unsigned char fileMode[DATA_LENGTH];
+            unsigned char* directory = argv[2];
             
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
