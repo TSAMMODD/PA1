@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <libgen.h>
 
 /* Constants. */
 /* Known lenghts. */
@@ -188,6 +189,8 @@ int main(int argc, char **argv) {
             
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
+                basename((char*) fileName);
+                fprintf(stdout, "filename check: %s", fileName);
                 parseFileMode(message, fileMode, strlen((char*)fileName));
                 parseFileContent(directory, fileName, sockfd, client, len);
             } else {
