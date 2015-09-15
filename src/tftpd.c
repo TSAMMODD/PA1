@@ -17,9 +17,16 @@
 #include <stdlib.h>
 
 /* Constants. */
+/* Known lenghts. */
 #define PACKAGE_LENGTH 516
 #define DATA_LENGTH 512
-#define ACK 4
+/* Opcodes. */
+#define OPC_RRQ 1
+#define OPC_WRQ 2
+#define OPC_DATA 3
+#define OPC_ACK 4
+#define OPC_ERROR 5
+/* */
 
 /* */
 int parseOpCode(char* message) {
@@ -50,7 +57,6 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
     char path[DATA_LENGTH];
     size_t readSize = 0;
     short blockNumber = 1;
-    int opCode = 3;
 
     strcpy(path, directory);
     strcat(path, "/");
@@ -68,14 +74,14 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
         readSize = fread(&(sendPackage[4]), 1, DATA_LENGTH, fp);
         fprintf(stdout, "READSIZE: %zu \n", readSize);
 
-        sendPackage[1] = opCode;
+        sendPackage[1] = OPC_DATA;
         sendPackage[3] = blockNumber & 0xff;
         sendPackage[2] = (blockNumber >> 8) & 0xff;
         sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
         memset(sendPackage, 0, PACKAGE_LENGTH);
         recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
         
-        if(parseOpCode(recievePackage) != ACK || parseBlockNumber(recievePackage) != blockNumber) {
+        if(parseOpCode(recievePackage) != OPC_ACK || parseBlockNumber(recievePackage) != blockNumber) {
             exit(0);
         }
 
@@ -126,16 +132,15 @@ int main(int argc, char **argv) {
             /* */
             recvfrom(sockfd, message, sizeof(message), 0, (struct sockaddr *) &client, &len);
 
-            int opCode;
-            char* directory = NULL;
-            char fileName[512];
-            char fileMode[512];
+            char fileName[DATA_LENGTH];
+            char fileMode[DATA_LENGTH];
+            char* directory = argv[2];
             
-            directory = argv[2];
-            opCode = parseOpCode(message);
-            parseFileName(message, fileName);
-            parseFileMode(message, fileMode, strlen(fileName));
-            parseFileContent(directory, fileName, sockfd, client, len);
+            if(parseOpCode(message) == OPC_RRQ) {
+                parseFileName(message, fileName);
+                parseFileMode(message, fileMode, strlen(fileName));
+                parseFileContent(directory, fileName, sockfd, client, len);
+            }
         } else {
             fprintf(stdout, "No message in five seconds.\n");
             fflush(stdout);
