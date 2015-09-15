@@ -16,11 +16,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Constants. */
 #define PACKAGE_LENGTH 516
 #define DATA_LENGTH 512
+#define ACK 4
 
 int parseOpCode(char* message) {
     return message[1];
+}
+
+int parseBlockNumber(char* message) {
+    char* tmp = message;
+    return (tmp[2] << 8) + tmp[3];
 }
 
 void parseFileName(char* message, char* fileName) {
@@ -31,9 +38,10 @@ void parseFileMode(char* message, char* fileMode, int fileNameSize) {
     strcpy(fileMode, message + 2 + fileNameSize + 1);
 }
 
-void parseFileContent(char* directory, char* fileName, int sockfd, struct sockaddr_in client) {
+void parseFileContent(char* directory, char* fileName, int sockfd, struct sockaddr_in client, socklen_t len) {
     FILE *fp;
-    char message[PACKAGE_LENGTH];
+    char sendPackage[PACKAGE_LENGTH];
+    char recievePackage[PACKAGE_LENGTH];
     char path[DATA_LENGTH];
     size_t readSize = 0;
     int blockNumber = 1;
@@ -49,19 +57,29 @@ void parseFileContent(char* directory, char* fileName, int sockfd, struct sockad
         exit(EXIT_FAILURE);
     }
 
-    memset(message, 0, PACKAGE_LENGTH);
-    message[1] = opCode;
+    memset(sendPackage, 0, PACKAGE_LENGTH);
 
     while(!feof(fp)) {
-        readSize = fread(&(message[4]), 1, 512, fp);
-        //fprintf(stdout, "READSIZE: %zu", readSize);
-        //fprintf(stdout, "TEST: %s", &(message[4]));
-        fflush(stdout);
+        //fread(&(sendPackage[4]), 1, 512, fp);
+        readSize = fread(&(sendPackage[4]), 1, 512, fp);
+        fprintf(stdout, "READSIZE: %zu \n", readSize);
+        //fprintf(stdout, "TEST: %s", &(sendPackage[4]));
+        //fflush(stdout);
 
-        message[3] = blockNumber & 0xff;
-        message[2] = (blockNumber >> 8) & 0xff;
-        sendto(sockfd, message, (size_t) readSize, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
-        memset(message, 0, PACKAGE_LENGTH);
+        sendPackage[1] = opCode;
+        sendPackage[3] = blockNumber & 0xff;
+        sendPackage[2] = (blockNumber >> 8) & 0xff;
+        sendto(sockfd, sendPackage, PACKAGE_LENGTH, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
+        memset(sendPackage, 0, PACKAGE_LENGTH);
+        recvfrom(sockfd, recievePackage, PACKAGE_LENGTH, 0, (struct sockaddr *) &client, &len);
+        
+        if(parseOpCode(recievePackage) == ACK && parseBlockNumber(recievePackage) == blockNumber) {
+            //continue;
+        } else {
+            //exit(0);
+        }
+
+        memset(recievePackage, 0, PACKAGE_LENGTH);
         blockNumber++;
     }
 
@@ -108,7 +126,8 @@ int main(int argc, char **argv) {
             /* Receive one byte less than declared,
                because it will be zero-termianted
                below. */
-            ssize_t n = recvfrom(sockfd, message, sizeof(message) - 1, 0, (struct sockaddr *) &client, &len);
+            //ssize_t n = recvfrom(sockfd, message, sizeof(message) - 1, 0, (struct sockaddr *) &client, &len);
+            recvfrom(sockfd, message, sizeof(message) - 1, 0, (struct sockaddr *) &client, &len);
 
             //
             int opCode;
@@ -121,7 +140,7 @@ int main(int argc, char **argv) {
             opCode = parseOpCode(message);
             parseFileName(message, fileName);
             parseFileMode(message, fileMode, strlen(fileName));
-            parseFileContent(directory, fileName, sockfd, client);
+            parseFileContent(directory, fileName, sockfd, client, len);
 
             /*
             fprintf(stdout, "directory: %s\n", directory);
