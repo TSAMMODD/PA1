@@ -32,7 +32,7 @@
  * with a packet.
  * The opcode is retrieved from the second byte in
  * the packet as the first is a nullbyte.
- * Opcodes are as follows:
+ *   Opcodes are as follows:
  *  opcode  operation
  *    1     Read request (RRQ)
  *    2     Write request (WRQ)
@@ -60,7 +60,7 @@ unsigned short parseBlockNumber(unsigned char* message) {
  * which starts at byte three and ends at the next nullbyte. 
  */
 void parseFileName(unsigned char* message, unsigned char* fileName) {
-    strcpy(fileName, message + 2);
+    strcpy((char*)fileName, (char*)message + 2);
 }
 
 /* A method that accepts as input three strings (char arrays)
@@ -70,7 +70,7 @@ void parseFileName(unsigned char* message, unsigned char* fileName) {
  * and the nullbyte after the filename.
  */
 void parseFileMode(unsigned char* message, unsigned char* fileMode, int fileNameSize) {
-    strcpy(fileMode, message + 2 + fileNameSize + 1);
+    strcpy((char*)fileMode, (char*)message + 2 + fileNameSize + 1);
 }
 
 /* */
@@ -82,9 +82,9 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
     size_t readSize = 0;
     unsigned short blockNumber = 1;
 
-    strcpy(path, directory);
+    strcpy(path, (char*)directory);
     strcat(path, "/");
-    strcat(path, fileName);    
+    strcat(path, (char*)fileName);    
     fp = fopen(path, "r");
 
     if(fp == NULL) {
@@ -170,11 +170,11 @@ int main(int argc, char **argv) {
 
             unsigned char fileName[DATA_LENGTH];
             unsigned char fileMode[DATA_LENGTH];
-            unsigned char* directory = argv[2];
+            unsigned char* directory = (unsigned char*) argv[2];
             
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
-                parseFileMode(message, fileMode, strlen(fileName));
+                parseFileMode(message, fileMode, strlen((char*)fileName));
                 parseFileContent(directory, fileName, sockfd, client, len);
             } else {
                 // error!
