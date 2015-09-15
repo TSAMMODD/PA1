@@ -62,7 +62,12 @@ void parseFileName(char* message, char* fileName) {
     strcpy(fileName, message + 2);
 }
 
-/* */
+/* A method that accepts as input three strings (char arrays)
+ * that represent a RRQ/WRQ packet, the file mode and the size of
+ * the file name respectively. It copies the mode field from the
+ * packet which starts at the byte that comes after the opcode, filename
+ * and the nullbyte after the filename.
+ */
 void parseFileMode(char* message, char* fileMode, int fileNameSize) {
     strcpy(fileMode, message + 2 + fileNameSize + 1);
 }
