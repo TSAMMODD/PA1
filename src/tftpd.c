@@ -21,12 +21,29 @@
 #define DATA_LENGTH 512
 #define ACK 4
 
-/* */
+/* A method that returns the opcode associated
+ * with a packet.
+ * The opcode is retrieved from the second byte in
+ * the packet as the first is a nullbyte.
+ * Opcodes are as follows:
+ *  opcode  operation
+ *    1     Read request (RRQ)
+ *    2     Write request (WRQ)
+ *    3     Data (DATA)
+ *    4     Acknowledgment (ACK)
+ *    5     Error (ERROR)
+ */
 int parseOpCode(char* message) {
     return message[1];
 }
 
-/* */
+/* A method that returns the block number associated
+ * with a packet. Block numbers are found in the 
+ * third and fourth byte of a packet.
+ * The block numbers on data packets 
+ * begin with one and increase by one for each 
+ * new block of data. 
+ */
 int parseBlockNumber(char* message) {
     char* tmp = message;
     return (tmp[2] << 8) + tmp[3];
