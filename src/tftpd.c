@@ -136,10 +136,8 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
                 errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
                 sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             }
-
             blockNumber++;
         }
-
         fclose(fp);
     }
 }
@@ -176,18 +174,17 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-            /* Data is available, receive it. */
-            assert(FD_ISSET(sockfd, &rfds));
-
-            /* Copy to len, since recvfrom may change it. */
-            socklen_t len = (socklen_t) sizeof(client);
-            /* */
-            recvfrom(sockfd, message, sizeof(message), 0, (struct sockaddr *) &client, &len);
-
             unsigned char fileName[DATA_LENGTH];
             unsigned char fileMode[DATA_LENGTH];
             unsigned char* directory = (unsigned char*) argv[2];
             unsigned char errorPackage[PACKAGE_LENGTH];
+
+            /* Data is available, receive it. */
+            assert(FD_ISSET(sockfd, &rfds));
+            /* Copy to len, since recvfrom may change it. */
+            socklen_t len = (socklen_t) sizeof(client);
+            /* */
+            recvfrom(sockfd, message, sizeof(message), 0, (struct sockaddr *) &client, &len);
             
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
