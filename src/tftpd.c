@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 
 /* Constants. */
 /* Known lenghts. */
@@ -137,9 +138,10 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
                 sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             }
             blockNumber++;
-        }
-        fclose(fp);
+	}
+	fclose(fp);
     }
+    fprintf(stdout, "file \"%s\" requested from %s:%d\n", fileName, inet_ntoa(client.sin_addr), client.sin_port);
 }
 
 int main(int argc, char **argv) {
