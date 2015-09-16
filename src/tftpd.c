@@ -85,7 +85,7 @@ void parseFileMode(unsigned char* message, unsigned char* fileMode, int fileName
  * It parses the file content and divides it into correct packets to send to the client.
  * In addition to that it handles most errors that could arise during our operation.
  */
-void parseFileContent(unsigned char* directory, unsigned char* fileName, int sockfd, struct sockaddr_in client, socklen_t len) {
+void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int sockfd, struct sockaddr_in client, socklen_t len) {
     FILE *fp;
     char path[DATA_LENGTH];
     unsigned char sendPackage[PACKAGE_LENGTH];
@@ -148,13 +148,15 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
                 sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             }
             blockNumber++;
-	}
-	fclose(fp);
+        }
+        fclose(fp);
     }
     fprintf(stdout, "file \"%s\" requested from %s:%d\n", fileName, inet_ntoa(client.sin_addr), client.sin_port);
 }
 
 int main(int argc, char **argv) {
+    if(argc < 3) exit(1);
+
     int sockfd;
     struct sockaddr_in server, client;
     unsigned char message[DATA_LENGTH];
@@ -206,7 +208,7 @@ int main(int argc, char **argv) {
                 parseFileMode(message, fileMode, strlen((char*)fileName));
                 //fprintf(stdout, "mode check: %s \n", fileMode);
                 //fflush(stdout);
-                parseFileContent(directory, fileName, sockfd, client, len);
+                handleFileTransfer(directory, fileName, sockfd, client, len);
             } else {
                 //fprintf(stdout, "opcode: %d \n", parseOpCode(message));
                 //fflush(stdout);
