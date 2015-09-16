@@ -18,7 +18,7 @@
 #include <arpa/inet.h>
 #include <libgen.h>
 
-/* Known lenghts. */
+/* Known lengths. */
 #define PACKAGE_LENGTH 516
 #define DATA_LENGTH 512
 #define ACK_PACKAGE_LENGTH 4
@@ -29,26 +29,25 @@
 #define OPC_ACK 4
 #define OPC_ERROR 5
 /* Error messages. */
-#define ERROR_MSG_NOT_ACK "ERROR! DID NOT RECIEVE ACK RESPONSE."
-#define ERROR_MSG_WRONG_BLOCKNUMBER "ERROR! RECIEVED RESPONSE WITH WRONG BLOCKNUMBER."
-#define ERROR_MSG_UNKNOWN_USER "ERROR! RECIEVED RESPONSE FROM UNKNOWN USER."
+#define ERROR_MSG_NOT_ACK "ERROR! DID NOT RECEIVE ACK RESPONSE."
+#define ERROR_MSG_WRONG_BLOCKNUMBER "ERROR! RECEIVED RESPONSE WITH WRONG BLOCKNUMBER."
+#define ERROR_MSG_UNKNOWN_USER "ERROR! RECEIVED RESPONSE FROM UNKNOWN USER."
 #define ERROR_MSG_FILE_NOT_FOUND "ERROR! FILE NOT FOUND."
-#define ERROR_MSG_ILLEGAL_TFTP_OPERATION "ERROR! ILLEGAL TFTP OPERTION."
+#define ERROR_MSG_ILLEGAL_TFTP_OPERATION "ERROR! ILLEGAL TFTP OPERATION."
 /* Error codes. */
 #define ERROR_CODE_NOT_DEFINED 0
 #define ERROR_CODE_FILE_NOT_FOUND 1
-#define ERROR_CODE_ACCESS_VIOLATIOM 2
+#define ERROR_CODE_ACCESS_VIOLATION 2
 #define ERROR_CODE_DISK_FULL_OR_ALLOCATION_EXCEEDED 3
 #define ERROR_CODE_ILLEGAL_TFTP_OPERATION 4
 #define ERROR_CODE_UNKNOWN_TRANSFER_ID 5
 #define ERROR_CODE_FILE_ALREADY_EXISTS 6
 #define ERROR_CODE_NO_SUCH_USER 7
 
-/* A method that returns the opcode associated
- * with a packet.
+/* A method that returns the opcode associated with a packet.
  * The opcode is retrieved from the second byte in
  * the packet as the first is a nullbyte.
- *   Opcodes are as follows:
+ * Opcodes are as follows:
  *  opcode  operation
  *    1     Read request (RRQ)
  *    2     Write request (WRQ)
@@ -170,7 +169,7 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
 }
 
 int main(int argc, char **argv) {
-    /* If number of arguments are fewer than 3 than we
+    /* If number of arguments are fewer than 3 then we
      * have illegal input and we exit the server.
      */
     if(argc < 3) exit(1);
@@ -184,7 +183,7 @@ int main(int argc, char **argv) {
     memset(&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     /* Network functions need arguments in network byte order instead of
-       host byte order. The macros htonl, htons convert the values, */
+       host byte order. The macros htonl, htons convert the values. */
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(atoi(argv[1]));
     bind(sockfd, (struct sockaddr *) &server, (socklen_t) sizeof(server));
@@ -215,7 +214,7 @@ int main(int argc, char **argv) {
             assert(FD_ISSET(sockfd, &rfds));
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
-            /* Recieve response from client. */
+            /* Receive response from client. */
             recvfrom(sockfd, message, sizeof(message), 0, (struct sockaddr *) &client, &len);
             
             /* We only want to handle write requests. */
@@ -223,14 +222,13 @@ int main(int argc, char **argv) {
                 parseFileName(message, fileName);
                 /* We use the basename function for security reasons. If the filename string
                  * contains '/' than the basename function return the component following the
-                 * final '/'. 
-                 */
+                 * final '/'. */
                 strcpy((char*) fileName, basename((char*) fileName));
                 parseFileMode(message, fileMode, strlen((char*)fileName));
                 /* Call function to handle all file transfer functionality. */ 
                 handleFileTransfer(directory, fileName, sockfd, client, len);
             }
-            /* If we get request that is not write request than we send a error package. */
+            /* If we get a request that is not a read request then we send an error package. */
             else {
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
