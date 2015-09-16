@@ -106,7 +106,8 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
     unsigned short receivedBlockNumber = 0;
 
     /* We make our path by combining the directory (accepted as input), a slash and
-     * the name of our file (accepted as input). */
+     * the name of our file (accepted as input).
+     */
     strcpy(path, (char*)directory);
     strcat(path, "/");
     strcat(path, (char*)fileName);    
@@ -132,17 +133,17 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
             sendPackage[3] = blockNumber & 0xff;
             sendPackage[2] = (blockNumber >> 8) & 0xff;
             
-	    /* Send a DATA packet to the client and receive an ACK packet. */
+            /* Send a DATA packet to the client and receive an ACK packet. */
             do {
                 sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
                 recvfrom(sockfd, receivePackage, sizeof(receivePackage), 0, (struct sockaddr *) &client, &len);
                 receivedOpCode = parseOpCode(receivePackage);
                 receivedBlockNumber = parseBlockNumber(receivePackage);
             } 
-	    /* We try the transfer again if the ACK packet received again from the client includes the wrong block number. */
-	    while(receivedBlockNumber == (blockNumber - 1) && receivedOpCode == OPC_ACK && port == client.sin_port);
+            /* We try the transfer again if the ACK packet received again from the client includes the wrong block number. */
+	        while(receivedBlockNumber == (blockNumber - 1) && receivedOpCode == OPC_ACK && port == client.sin_port);
             
-	    /* We go into this clause if an error occured and handle it. */ 
+	        /* We go into this clause if an error occured and handle it. */ 
             if(receivedOpCode != OPC_ACK || receivedBlockNumber != blockNumber || port != client.sin_port) {
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
