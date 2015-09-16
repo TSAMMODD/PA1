@@ -104,7 +104,7 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
     strcat(path, (char*)fileName);    
     fp = fopen(path, "r");
 
-    /* Handle case when our file was not found, i.e. the file is NULL */ 
+    /* Handle case when our file was not found, i.e. when the file is NULL */ 
     if(fp == NULL) {
         memset(errorPackage, 0, PACKAGE_LENGTH);
         errorPackage[1] = OPC_ERROR;
