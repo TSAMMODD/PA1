@@ -22,7 +22,7 @@
 /* Known lenghts. */
 #define PACKAGE_LENGTH 516
 #define DATA_LENGTH 512
-#define RECIEVE_PACKAGE_LENGTH 4
+#define ACK_PACKAGE_LENGTH 4
 /* Opcodes. */
 #define OPC_RRQ 1
 #define OPC_WRQ 2
@@ -86,7 +86,7 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
     FILE *fp;
     char path[DATA_LENGTH];
     unsigned char sendPackage[PACKAGE_LENGTH];
-    unsigned char recievePackage[RECIEVE_PACKAGE_LENGTH];
+    unsigned char recievePackage[ACK_PACKAGE_LENGTH];
     unsigned char errorPackage[PACKAGE_LENGTH];
     unsigned short blockNumber = 1;
     unsigned short port = client.sin_port;
@@ -116,7 +116,6 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
             sendPackage[3] = blockNumber & 0xff;
             sendPackage[2] = (blockNumber >> 8) & 0xff;
             sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
-            memset(sendPackage, 0, PACKAGE_LENGTH);
             recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
 
             recievedOpCode = parseOpCode(recievePackage); 
