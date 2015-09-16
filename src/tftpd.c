@@ -22,13 +22,14 @@
 /* Known lenghts. */
 #define PACKAGE_LENGTH 516
 #define DATA_LENGTH 512
+#define RECIEVE_PACKAGE_LENGTH 4
 /* Opcodes. */
 #define OPC_RRQ 1
 #define OPC_WRQ 2
 #define OPC_DATA 3
 #define OPC_ACK 4
 #define OPC_ERROR 5
-/* */
+/* Error messages. */
 #define ERROR_MSG_NOT_ACK "ERROR! DID NOT RECIEVE ACK RESPONSE."
 #define ERROR_MSG_WRONG_BLOCKNUMBER "ERROR! RECIEVED RESPONSE WITH WRONG BLOCKNUMBER."
 #define ERROR_MSG_UNKNOWN_USER "ERROR! RECIEVED RESPONSE FROM UNKNOWN USER."
@@ -85,7 +86,7 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
     FILE *fp;
     char path[DATA_LENGTH];
     unsigned char sendPackage[PACKAGE_LENGTH];
-    unsigned char recievePackage[PACKAGE_LENGTH];
+    unsigned char recievePackage[RECIEVE_PACKAGE_LENGTH];
     unsigned char errorPackage[PACKAGE_LENGTH];
     unsigned short blockNumber = 1;
     unsigned short port = client.sin_port;
@@ -191,8 +192,8 @@ int main(int argc, char **argv) {
             
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
-                basename((char*) fileName);
-                fprintf(stdout, "filename check: %s", fileName);
+                strcpy((char*) fileName, basename((char*) fileName));
+                fprintf(stdout, "filename check: %s \n", fileName);
                 parseFileMode(message, fileMode, strlen((char*)fileName));
                 parseFileContent(directory, fileName, sockfd, client, len);
             } else {
