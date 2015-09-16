@@ -88,13 +88,13 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
     FILE *fp;
     char path[DATA_LENGTH];
     unsigned char sendPackage[PACKAGE_LENGTH];
-    unsigned char recievePackage[ACK_PACKAGE_LENGTH];
+    unsigned char receivePackage[ACK_PACKAGE_LENGTH];
     unsigned char errorPackage[PACKAGE_LENGTH];
     unsigned short blockNumber = 1;
     unsigned short port = client.sin_port;
     size_t readSize = 0;
-    unsigned short recievedOpCode = 0;
-    unsigned short recievedBlockNumber = 0;
+    unsigned short receivedOpCode = 0;
+    unsigned short receivedBlockNumber = 0;
 
     /* We make our path by combining the directory (accepted as input), a slash and
      * the name of our file (accepted as input). */
@@ -108,6 +108,7 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
         memset(errorPackage, 0, PACKAGE_LENGTH);
         errorPackage[1] = OPC_ERROR;
         errorPackage[3] = 1;
+
         strcpy((char*)&(errorPackage[4]), ERROR_MSG_FILE_NOT_FOUND);
         errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
         sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
@@ -115,7 +116,7 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
 	    /* While we have not reached the end of our file we send it in packets to our client. */
         while(!feof(fp)) {
             memset(sendPackage, 0, PACKAGE_LENGTH);
-            memset(recievePackage, 0, PACKAGE_LENGTH);
+            memset(receivePackage, 0, PACKAGE_LENGTH);
             readSize = fread(&(sendPackage[4]), 1, DATA_LENGTH, fp);
 
             sendPackage[1] = OPC_DATA;
@@ -124,19 +125,19 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
             
             do {
                 sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
-                recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
-                recievedOpCode = parseOpCode(recievePackage);
-                recievedBlockNumber = parseBlockNumber(recievePackage);
-            } while(recievedBlockNumber == (blockNumber - 1) && recievedOpCode == OPC_ACK && port == client.sin_port);
+                recvfrom(sockfd, receivePackage, sizeof(receivePackage), 0, (struct sockaddr *) &client, &len);
+                receivedOpCode = parseOpCode(receivePackage);
+                receivedBlockNumber = parseBlockNumber(receivePackage);
+            } while(receivedBlockNumber == (blockNumber - 1) && receivedOpCode == OPC_ACK && port == client.sin_port);
             
-            if(recievedOpCode != OPC_ACK || recievedBlockNumber != blockNumber || port != client.sin_port) {
+            if(receivedOpCode != OPC_ACK || receivedBlockNumber != blockNumber || port != client.sin_port) {
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
                 errorPackage[3] = 0;
 
-                if(recievedOpCode != OPC_ACK) {
+                if(receivedOpCode != OPC_ACK) {
                     strcpy((char*)&(errorPackage[4]), ERROR_MSG_NOT_ACK);
-                } else if(recievedBlockNumber != blockNumber) {
+                } else if(receivedBlockNumber != blockNumber) {
                     strcpy((char*)&(errorPackage[4]), ERROR_MSG_WRONG_BLOCKNUMBER);
                 } else if(port != client.sin_port) {
                     errorPackage[3] = 5;
