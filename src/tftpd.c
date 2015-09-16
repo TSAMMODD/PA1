@@ -123,13 +123,17 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
             sendPackage[3] = blockNumber & 0xff;
             sendPackage[2] = (blockNumber >> 8) & 0xff;
             
+	    /* Send a DATA packet to the client and receive an ACK packet. */
             do {
                 sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
                 recvfrom(sockfd, receivePackage, sizeof(receivePackage), 0, (struct sockaddr *) &client, &len);
                 receivedOpCode = parseOpCode(receivePackage);
                 receivedBlockNumber = parseBlockNumber(receivePackage);
-            } while(receivedBlockNumber == (blockNumber - 1) && receivedOpCode == OPC_ACK && port == client.sin_port);
+            } 
+	    /* We try the transfer again if the ACK packet received again from the client includes the wrong block number. */
+	    while(receivedBlockNumber == (blockNumber - 1) && receivedOpCode == OPC_ACK && port == client.sin_port);
             
+	    /* We going into this clause if an error occured and handle it. */ 
             if(receivedOpCode != OPC_ACK || receivedBlockNumber != blockNumber || port != client.sin_port) {
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
@@ -151,7 +155,9 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
         }
         fclose(fp);
     }
+    /* Print to stdout which file is requested from which IP and port. */
     fprintf(stdout, "file \"%s\" requested from %s:%d\n", fileName, inet_ntoa(client.sin_addr), client.sin_port);
+    fflush(stdout);
 }
 
 int main(int argc, char **argv) {
