@@ -104,7 +104,7 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
         errorPackage[1] = OPC_ERROR;
         errorPackage[3] = 1;
         strcpy((char*)&(errorPackage[4]), ERROR_MSG_FILE_NOT_FOUND);
-        errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
+        //errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
         sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
     } else {
         while(!feof(fp)) {
@@ -135,7 +135,7 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
                     strcpy((char*)&(errorPackage[4]), ERROR_MSG_UNKNOWN_USER);
                 }
 
-                errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
+                //errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
                 sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             }
             blockNumber++;
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
                 errorPackage[1] = OPC_ERROR;
                 errorPackage[3] = 4;
                 strcpy((char*)&(errorPackage[4]), ERROR_MSG_ILLEGAL_TFTP_OPERATION);
-                errorPackage[sizeof(ERROR_MSG_ILLEGAL_TFTP_OPERATION) + 4] = '\0';
+                //errorPackage[sizeof(ERROR_MSG_ILLEGAL_TFTP_OPERATION) + 4] = '\0';
                 sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             }
         } else {
