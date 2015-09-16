@@ -142,8 +142,8 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
                 sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
             }
             blockNumber++;
-	}
-	fclose(fp);
+        }
+        fclose(fp);
     }
     fprintf(stdout, "file \"%s\" requested from %s:%d\n", fileName, inet_ntoa(client.sin_addr), client.sin_port);
 }
