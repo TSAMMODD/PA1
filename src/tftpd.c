@@ -18,7 +18,6 @@
 #include <arpa/inet.h>
 #include <libgen.h>
 
-/* Constants. */
 /* Known lenghts. */
 #define PACKAGE_LENGTH 516
 #define DATA_LENGTH 512
@@ -98,13 +97,13 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
     unsigned short recievedBlockNumber = 0;
 
     /* We make our path by combining the directory (accepted as input), a slash and
-     * the name of our file (accepted as input) */
+     * the name of our file (accepted as input). */
     strcpy(path, (char*)directory);
     strcat(path, "/");
     strcat(path, (char*)fileName);    
     fp = fopen(path, "r");
 
-    /* Handle case when our file was not found, i.e. when the file is NULL */ 
+    /* Handle case when our file was not found, i.e. when the file is NULL. */ 
     if(fp == NULL) {
         memset(errorPackage, 0, PACKAGE_LENGTH);
         errorPackage[1] = OPC_ERROR;
@@ -113,7 +112,7 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
         errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
         sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
     } else {
-	/* While we have not reached the end of our file we send it in packets to our client. */
+	    /* While we have not reached the end of our file we send it in packets to our client. */
         while(!feof(fp)) {
             memset(sendPackage, 0, PACKAGE_LENGTH);
             memset(recievePackage, 0, PACKAGE_LENGTH);
