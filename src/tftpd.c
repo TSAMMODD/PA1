@@ -81,7 +81,10 @@ void parseFileMode(unsigned char* message, unsigned char* fileMode, int fileName
     strcpy((char*)fileMode, (char*)message + 2 + fileNameSize + 1);
 }
 
-/* */
+/* A method that handles all operations regarding file transfer.
+ * It parses the file content and divides it into correct packets to send to the client.
+ * In addition to that it handles most errors that could arise during our operation.
+ */
 void parseFileContent(unsigned char* directory, unsigned char* fileName, int sockfd, struct sockaddr_in client, socklen_t len) {
     FILE *fp;
     char path[DATA_LENGTH];
@@ -94,11 +97,14 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
     unsigned short recievedOpCode = 0;
     unsigned short recievedBlockNumber = 0;
 
+    /* We make our path by combining the directory (accepted as input), a slash and
+     * the name of our file (accepted as input) */
     strcpy(path, (char*)directory);
     strcat(path, "/");
     strcat(path, (char*)fileName);    
     fp = fopen(path, "r");
 
+    /* Handle case when our file was not found, i.e. the file is NULL */ 
     if(fp == NULL) {
         memset(errorPackage, 0, PACKAGE_LENGTH);
         errorPackage[1] = OPC_ERROR;
@@ -106,8 +112,8 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
         strcpy((char*)&(errorPackage[4]), ERROR_MSG_FILE_NOT_FOUND);
         errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
         sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
-
     } else {
+	/* While we have not reached the end of our file we send it in packets to our client. */
         while(!feof(fp)) {
             memset(sendPackage, 0, PACKAGE_LENGTH);
             memset(recievePackage, 0, PACKAGE_LENGTH);
