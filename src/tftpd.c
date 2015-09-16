@@ -116,12 +116,14 @@ void parseFileContent(unsigned char* directory, unsigned char* fileName, int soc
             sendPackage[1] = OPC_DATA;
             sendPackage[3] = blockNumber & 0xff;
             sendPackage[2] = (blockNumber >> 8) & 0xff;
-            sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
-            recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
-
-            recievedOpCode = parseOpCode(recievePackage); 
-            recievedBlockNumber = parseBlockNumber(recievePackage); 
-
+            
+            do {
+                sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
+                recvfrom(sockfd, recievePackage, sizeof(recievePackage), 0, (struct sockaddr *) &client, &len);
+                recievedOpCode = parseOpCode(recievePackage);
+                recievedBlockNumber = parseBlockNumber(recievePackage);
+            } while(recievedBlockNumber == (blockNumber - 1) && recievedOpCode == OPC_ACK && port == client.sin_port);
+            
             if(recievedOpCode != OPC_ACK || recievedBlockNumber != blockNumber || port != client.sin_port) {
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
@@ -193,15 +195,15 @@ int main(int argc, char **argv) {
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
                 strcpy((char*) fileName, basename((char*) fileName));
-                fprintf(stdout, "filename check: %s \n", fileName);
-                fflush(stdout);
+                //fprintf(stdout, "filename check: %s \n", fileName);
+                //fflush(stdout);
                 parseFileMode(message, fileMode, strlen((char*)fileName));
-                fprintf(stdout, "mode check: %s \n", fileMode);
-                fflush(stdout);
+                //fprintf(stdout, "mode check: %s \n", fileMode);
+                //fflush(stdout);
                 parseFileContent(directory, fileName, sockfd, client, len);
             } else {
-                fprintf(stdout, "opcode: %d \n", parseOpCode(message));
-                fflush(stdout);
+                //fprintf(stdout, "opcode: %d \n", parseOpCode(message));
+                //fflush(stdout);
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
                 errorPackage[3] = 4;
