@@ -34,6 +34,15 @@
 #define ERROR_MSG_UNKNOWN_USER "ERROR! RECIEVED RESPONSE FROM UNKNOWN USER."
 #define ERROR_MSG_FILE_NOT_FOUND "ERROR! FILE NOT FOUND."
 #define ERROR_MSG_ILLEGAL_TFTP_OPERATION "ERROR! ILLEGAL TFTP OPERTION."
+/* */
+#define ERROR_CODE_NOT_DEFINED 0
+#define ERROR_CODE_FILE_NOT_FOUND 1
+#define ERROR_CODE_ACCESS_VIOLATIOM 2
+#define ERROR_CODE_DISK_FULL_OR_ALLOCATION_EXCEEDED 3
+#define ERROR_CODE_ILLEGAL_TFTP_OPERATION 4
+#define ERROR_CODE_UNKNOWN_TRANSFER_ID 5
+#define ERROR_CODE_FILE_ALREADY_EXISTS 6
+#define ERROR_CODE_NO_SUCH_USER 7
 
 /* A method that returns the opcode associated
  * with a packet.
@@ -203,15 +212,9 @@ int main(int argc, char **argv) {
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
                 strcpy((char*) fileName, basename((char*) fileName));
-                //fprintf(stdout, "filename check: %s \n", fileName);
-                //fflush(stdout);
                 parseFileMode(message, fileMode, strlen((char*)fileName));
-                //fprintf(stdout, "mode check: %s \n", fileMode);
-                //fflush(stdout);
                 handleFileTransfer(directory, fileName, sockfd, client, len);
             } else {
-                //fprintf(stdout, "opcode: %d \n", parseOpCode(message));
-                //fflush(stdout);
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
                 errorPackage[3] = 4;
