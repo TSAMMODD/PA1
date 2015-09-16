@@ -193,7 +193,10 @@ int main(int argc, char **argv) {
                 parseFileName(message, fileName);
                 strcpy((char*) fileName, basename((char*) fileName));
                 fprintf(stdout, "filename check: %s \n", fileName);
+                fflush(stdout);
                 parseFileMode(message, fileMode, strlen((char*)fileName));
+                fprintf(stdout, "mode check: %s \n", fileMode);
+                fflush(stdout);
                 parseFileContent(directory, fileName, sockfd, client, len);
             } else {
                 fprintf(stdout, "opcode: %d \n", parseOpCode(message));
