@@ -34,7 +34,7 @@
 #define ERROR_MSG_UNKNOWN_USER "ERROR! RECIEVED RESPONSE FROM UNKNOWN USER."
 #define ERROR_MSG_FILE_NOT_FOUND "ERROR! FILE NOT FOUND."
 #define ERROR_MSG_ILLEGAL_TFTP_OPERATION "ERROR! ILLEGAL TFTP OPERTION."
-/* */
+/* Error codes. */
 #define ERROR_CODE_NOT_DEFINED 0
 #define ERROR_CODE_FILE_NOT_FOUND 1
 #define ERROR_CODE_ACCESS_VIOLATIOM 2
@@ -164,6 +164,9 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
 }
 
 int main(int argc, char **argv) {
+    /* If number of arguments are fewer than 3 than we
+     * have illegal input and we exit the server.
+     */
     if(argc < 3) exit(1);
 
     int sockfd;
@@ -206,18 +209,26 @@ int main(int argc, char **argv) {
             assert(FD_ISSET(sockfd, &rfds));
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
-            /* */
+            /* Recieve response from client. */
             recvfrom(sockfd, message, sizeof(message), 0, (struct sockaddr *) &client, &len);
             
+            /* We only want to handle write requests. */
             if(parseOpCode(message) == OPC_RRQ) {
                 parseFileName(message, fileName);
+                /* We use the basename function for security reasons. If the filename string
+                 * contains '/' than the basename function return the component following the
+                 * final '/'. 
+                 */
                 strcpy((char*) fileName, basename((char*) fileName));
                 parseFileMode(message, fileMode, strlen((char*)fileName));
+                /* Call function to handle all file transfer functionality. */ 
                 handleFileTransfer(directory, fileName, sockfd, client, len);
-            } else {
+            }
+            /* If we get request that is not write request than we send a error package. */
+            else {
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
-                errorPackage[3] = 4;
+                errorPackage[3] = ERROR_CODE_ILLEGAL_TFTP_OPERATION;
                 strcpy((char*)&(errorPackage[4]), ERROR_MSG_ILLEGAL_TFTP_OPERATION);
                 errorPackage[sizeof(ERROR_MSG_ILLEGAL_TFTP_OPERATION) + 4] = '\0';
                 sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
