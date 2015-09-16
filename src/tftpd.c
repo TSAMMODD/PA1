@@ -122,7 +122,7 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
         errorPackage[sizeof(ERROR_MSG_UNKNOWN_USER) + 4] = '\0';
         sendto(sockfd, errorPackage, sizeof(errorPackage), 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
     } else {
-	    /* While we have not reached the end of our file we send it in packets to our client. */
+	/* While we have not reached the end of our file we send it in packets to our client. */
         while(!feof(fp)) {
             memset(sendPackage, 0, PACKAGE_LENGTH);
             memset(receivePackage, 0, PACKAGE_LENGTH);
@@ -132,24 +132,28 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
             sendPackage[3] = blockNumber & 0xff;
             sendPackage[2] = (blockNumber >> 8) & 0xff;
             
+	    /* Send a DATA packet to the client and receive an ACK packet. */
             do {
                 sendto(sockfd, sendPackage, readSize + 4, 0, (struct sockaddr *) &client, (socklen_t) sizeof(client));
                 recvfrom(sockfd, receivePackage, sizeof(receivePackage), 0, (struct sockaddr *) &client, &len);
                 receivedOpCode = parseOpCode(receivePackage);
                 receivedBlockNumber = parseBlockNumber(receivePackage);
-            } while(receivedBlockNumber == (blockNumber - 1) && receivedOpCode == OPC_ACK && port == client.sin_port);
+            } 
+	    /* We try the transfer again if the ACK packet received again from the client includes the wrong block number. */
+	    while(receivedBlockNumber == (blockNumber - 1) && receivedOpCode == OPC_ACK && port == client.sin_port);
             
+	    /* We go into this clause if an error occured and handle it. */ 
             if(receivedOpCode != OPC_ACK || receivedBlockNumber != blockNumber || port != client.sin_port) {
                 memset(errorPackage, 0, PACKAGE_LENGTH);
                 errorPackage[1] = OPC_ERROR;
-                errorPackage[3] = 0;
+                errorPackage[3] = ERROR_CODE_NOT_DEFINED;
 
                 if(receivedOpCode != OPC_ACK) {
                     strcpy((char*)&(errorPackage[4]), ERROR_MSG_NOT_ACK);
                 } else if(receivedBlockNumber != blockNumber) {
                     strcpy((char*)&(errorPackage[4]), ERROR_MSG_WRONG_BLOCKNUMBER);
                 } else if(port != client.sin_port) {
-                    errorPackage[3] = 5;
+                    errorPackage[3] = ERROR_CODE_UNKNOWN_TRANSFER_ID;
                     strcpy((char*)&(errorPackage[4]), ERROR_MSG_UNKNOWN_USER);
                 }
 
@@ -160,7 +164,9 @@ void handleFileTransfer(unsigned char* directory, unsigned char* fileName, int s
         }
         fclose(fp);
     }
+    /* Print to stdout which file is requested from which IP and port. */
     fprintf(stdout, "file \"%s\" requested from %s:%d\n", fileName, inet_ntoa(client.sin_addr), client.sin_port);
+    fflush(stdout);
 }
 
 int main(int argc, char **argv) {
